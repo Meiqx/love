@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <title>To小爱</title>
+    <style>
+        html, body{
+            margin: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #FFA5A5;
+        }
+        .hrt{
+            width: 100px;
+            height: 100px;
+            background-color: #d5093c;
+            box-shadow: 0 0 70px #d5093c;
+            animation: sport 1s infinite;
+        }
+        .lef{
+            border-radius: 100px;
+            position: absolute;
+            top: 100px;
+            left: 70px;
+        }
+        .rig{
+            border-radius: 100px;
+            position: absolute;
+            top: 100px;
+            left: 140.5px;
+        }
+        .cen{
+            transform: rotate(45deg);
+            position: absolute;
+            top: 134.5px;
+            left: 105.5px;
+        }
+        @keyframes sport {
+            0%{transform: scale(1) rotate(45deg);}
+            50%{transform: scale(1.1) rotate(45deg);}
+            100%{transform: scale(1) rotate(45deg);}
+        }
+        h2 {
+            font-size: 220%;
+            font-weight: 400;
+        }
+        
+        .content {
+            position: absolute;
+            width: 100%;
+            top: 70%;
+            transform: translate(0, -130%);
+            text-align: center;
+        }
+        
+        .timer {
+            font-size: 100%;
+            line-height: 1.5;
+            margin: 1em 0;
+        }
+        
+        .timer b {
+            color: rgb(253, 99, 125);
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="hrt lef"></div>
+        <div class="hrt cen"></div>
+        <div class="hrt rig"></div>
+        <div class="content">
+        <h2>宝贝，我们已经在一起</h2>
+        <div class="timer">
+            <b id="d"></b> 天 <b id="h"></b> 小时 <b id="m"></b> 分 <b id="s"></b> 秒
+        </div>
+    </div>
+</div>
+<!--心脏跳动声-->
+<audio src="mp3/heartbeat.mp3" autoplay="autoplay" loop="loop"></audio>
+<script>
+    function timer() {
+        var start = new Date("2023/2/14 00:00:00"); // 2015.7.2
+        var t = new Date() - start;
+        var d = parseInt((new Date().getTime()-start.getTime())/(1000*3600*24));
+        var h = ~~(t / 1000 / 60 / 60 % 24);
+        if (h < 10) {
+            h = "0" + h;
+        }
+        var m = ~~(t / 1000 / 60 % 60);
+        if (m < 10) {
+            m = "0" + m;
+        }
+
+        var s = ~~(t / 1000 % 60);
+        if (s < 10) {
+            s = "0" + s;
+        }
+        document.getElementById('d').innerHTML = d;
+        document.getElementById('h').innerHTML = h;
+        document.getElementById('m').innerHTML = m;
+        document.getElementById('s').innerHTML = s;
+    }
+    timer();
+    setInterval(timer, 1000);
+</script>
+</body>
+</html>
