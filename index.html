@@ -108,7 +108,7 @@
     const numHearts = 5;
 
     // 创建红心的函数
-    function createHearts(event) {
+    function createHearts(x, y) {
         for (let i = 0; i < numHearts; i++) {
             // 创建一个新的红心元素
             const heart = document.createElement("div");
@@ -123,9 +123,9 @@
             const randomX = (Math.random() - 0.5) * 200;  // 随机的水平距离（-100px 到 100px）
             const randomY = - (Math.random() * 200 + 100);  // 随机的垂直距离（-100px 到 -300px）
 
-            // 将红心的初始位置设置为鼠标点击的位置
-            heart.style.left = `${event.pageX - size / 2}px`;  // 使红心居中在点击位置
-            heart.style.top = `${event.pageY - size / 2}px`;  // 使红心居中在点击位置
+            // 将红心的初始位置设置为触摸或点击的位置
+            heart.style.left = `${x - size / 2}px`;  // 使红心居中在点击或触摸位置
+            heart.style.top = `${y - size / 2}px`;  // 使红心居中在点击或触摸位置
 
             // 使用 CSS 变量来应用随机的移动方向
             heart.style.setProperty('--x', `${randomX}px`);
@@ -142,7 +142,23 @@
     }
 
     // 在页面上监听点击事件
-    document.body.addEventListener("click", createHearts);
+    document.body.addEventListener("click", (event) => {
+        createHearts(event.pageX, event.pageY);
+    });
+
+    // 监听触摸事件（开始和移动）
+    document.body.addEventListener("touchstart", (event) => {
+        const touch = event.touches[0];  // 获取第一个触摸点
+        createHearts(touch.pageX, touch.pageY);
+        event.preventDefault();  // 防止页面滚动
+    });
+
+    document.body.addEventListener("touchmove", (event) => {
+        const touch = event.touches[0];  // 获取第一个触摸点
+        createHearts(touch.pageX, touch.pageY);
+        event.preventDefault();  // 防止页面滚动
+    });
+
     function timer() {
         var start = new Date("2023/2/14 00:00:00"); // 2015.7.2
         var t = new Date() - start;
