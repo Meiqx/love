@@ -67,6 +67,26 @@
         .timer b {
             color: rgb(253, 99, 125);
         }
+
+        /* 红心的样式 */
+        .heart {
+            position: absolute;
+            font-size: 30px;
+            color: red;
+            animation: float 3s ease-out forwards;
+        }
+
+        /* 红心的漂浮动画 */
+        @keyframes float {
+            0% {
+                transform: scale(0) translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) translate(var(--x), var(--y));
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -84,6 +104,45 @@
 <!--心脏跳动声-->
 <audio src="mp3/heartbeat.mp3" autoplay="autoplay" loop="loop"></audio>
 <script>
+    // 每次点击生成的红心数量
+    const numHearts = 5;
+
+    // 创建红心的函数
+    function createHearts(event) {
+        for (let i = 0; i < numHearts; i++) {
+            // 创建一个新的红心元素
+            const heart = document.createElement("div");
+            heart.classList.add("heart");
+            heart.innerHTML = "❤️";
+
+            // 随机化红心的大小
+            const size = Math.random() * 20 + 20;  // 红心大小在 20px 到 40px 之间
+            heart.style.fontSize = `${size}px`;
+
+            // 随机化红心漂浮的方向和距离
+            const randomX = (Math.random() - 0.5) * 200;  // 随机的水平距离（-100px 到 100px）
+            const randomY = - (Math.random() * 200 + 100);  // 随机的垂直距离（-100px 到 -300px）
+
+            // 将红心的初始位置设置为鼠标点击的位置
+            heart.style.left = `${event.pageX - size / 2}px`;  // 使红心居中在点击位置
+            heart.style.top = `${event.pageY - size / 2}px`;  // 使红心居中在点击位置
+
+            // 使用 CSS 变量来应用随机的移动方向
+            heart.style.setProperty('--x', `${randomX}px`);
+            heart.style.setProperty('--y', `${randomY}px`);
+
+            // 将红心添加到页面中
+            document.body.appendChild(heart);
+
+            // 动画结束后移除红心（3秒后）
+            setTimeout(() => {
+                heart.remove();
+            }, 3000);
+        }
+    }
+
+    // 在页面上监听点击事件
+    document.body.addEventListener("click", createHearts);
     function timer() {
         var start = new Date("2023/2/14 00:00:00"); // 2015.7.2
         var t = new Date() - start;
