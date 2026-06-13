@@ -65,29 +65,29 @@
         }
 
         .hrt{
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             background-color: #d5093c;
-            box-shadow: 0 0 60px rgba(213, 9, 60, 0.5);
+            box-shadow: 0 0 45px rgba(213, 9, 60, 0.5);
             animation: sport 1.2s ease-in-out infinite;
         }
         .lef{
-            border-radius: 100px;
+            border-radius: 80px;
             position: absolute;
             top: 100px;
             left: 70px;
         }
         .rig{
-            border-radius: 100px;
+            border-radius: 80px;
             position: absolute;
             top: 100px;
-            left: 140.5px;
+            left: 126.5px;
         }
         .cen{
             transform: rotate(45deg);
             position: absolute;
-            top: 134.5px;
-            left: 105.5px;
+            top: 127.5px;
+            left: 98.5px;
         }
         @keyframes sport {
             0%, 100% {transform: scale(1) rotate(45deg);}
@@ -1088,7 +1088,7 @@
 
         <!-- 音乐控制按钮 -->
         <div class="music-control" id="musicControl">
-            <div class="music-icon" id="musicIcon">
+            <div class="music-icon muted" id="musicIcon">
                 <div class="speaker"></div>
                 <div class="sound-waves">
                     <div class="wave"></div>
@@ -1154,7 +1154,7 @@
 
     <canvas id="fireworks-canvas"></canvas>
 
-    <audio id="bgMusic" src="love.mp3" loop="loop"></audio>
+    <audio id="bgMusic" src="love.mp3" loop="loop" muted></audio>
 
     <script>
         const importantDates = [
@@ -1505,41 +1505,41 @@
         const musicIcon = document.getElementById('musicIcon');
         let isMusicPlaying = false;
 
-        // 尝试自动播放
-        bgMusic.play().catch(() => {
-            // 浏览器阻止了自动播放，等待用户交互
-            isMusicPlaying = false;
-            musicIcon.classList.add('muted');
-        });
+        bgMusic.muted = true;
+        musicIcon.classList.add('muted');
 
-        // 如果成功播放
+        // 同步播放状态
         bgMusic.addEventListener('play', () => {
             isMusicPlaying = true;
-            musicIcon.classList.remove('muted');
+        });
+
+        bgMusic.addEventListener('pause', () => {
+            isMusicPlaying = false;
         });
 
         // 点击切换播放/暂停
         musicControl.addEventListener('click', (e) => {
             e.stopPropagation();
             if (isMusicPlaying) {
+                bgMusic.muted = true;
                 bgMusic.pause();
-                isMusicPlaying = false;
                 musicIcon.classList.add('muted');
             } else {
-                bgMusic.play();
-                isMusicPlaying = true;
-                musicIcon.classList.remove('muted');
+                bgMusic.muted = false;
+                const playPromise = bgMusic.play();
+                if (playPromise) {
+                    playPromise.then(() => {
+                        musicIcon.classList.remove('muted');
+                    }).catch(() => {
+                        bgMusic.muted = true;
+                        isMusicPlaying = false;
+                        musicIcon.classList.add('muted');
+                    });
+                } else {
+                    musicIcon.classList.remove('muted');
+                }
             }
         });
-
-        // 页面首次点击时尝试播放（应对浏览器自动播放限制）
-        let hasTriedAutoPlay = false;
-        document.addEventListener('click', () => {
-            if (!hasTriedAutoPlay && !isMusicPlaying) {
-                bgMusic.play().catch(() => {});
-                hasTriedAutoPlay = true;
-            }
-        }, { once: true });
 
         // ============ 红心点击特效 ============
         const numHearts = 5;
