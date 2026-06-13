@@ -2,25 +2,74 @@
 <html lang="zh-cn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="renderer" content="webkit">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
     <title>To小爱</title>
     <style>
-        html, body{
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body{
             height: 100%;
             width: 100%;
             overflow: hidden;
-            background-color: #FFA5A5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
+
+        body.theme-pink {
+            background: linear-gradient(45deg, #FFA5A5 0%, #ffccd5 100%);
+        }
+        body.theme-starry {
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+        }
+        body.theme-sakura {
+            background: linear-gradient(120deg, #ffeef8 0%, #ffe4f1 100%);
+        }
+        body.theme-beach {
+            background: linear-gradient(180deg, #89d4f5 0%, #f4e4a5 100%);
+        }
+        body.theme-sunset {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        /* 主题指示器 */
+        .theme-indicator {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-weight: 500;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-indicator.show {
+            opacity: 1;
+        }
+
+        body.theme-starry .theme-indicator {
+            color: rgba(255, 255, 255, 0.95);
+        }
+
         .hrt{
             width: 100px;
             height: 100px;
             background-color: #d5093c;
-            box-shadow: 0 0 70px #d5093c;
-            animation: sport 1s infinite;
+            box-shadow: 0 0 60px rgba(213, 9, 60, 0.5);
+            animation: sport 1.2s ease-in-out infinite;
         }
         .lef{
             border-radius: 100px;
@@ -41,148 +90,1753 @@
             left: 105.5px;
         }
         @keyframes sport {
-            0%{transform: scale(1) rotate(45deg);}
-            50%{transform: scale(1.1) rotate(45deg);}
-            100%{transform: scale(1) rotate(45deg);}
+            0%, 100% {transform: scale(1) rotate(45deg);}
+            50% {transform: scale(1.08) rotate(45deg);}
         }
-        h2 {
-            font-size: 220%;
-            font-weight: 400;
-        }
-        
+
         .content {
             position: absolute;
             width: 100%;
             top: 70%;
             transform: translate(0, -130%);
             text-align: center;
-        }
-        
-        .timer {
-            font-size: 100%;
-            line-height: 1.5;
-            margin: 1em 0;
-        }
-        
-        .timer b {
-            color: rgb(253, 99, 125);
+            color: rgba(0,0,0,0.75);
         }
 
-        /* 红心的样式 */
+        /* 中央堆叠：爱心 + love.png 居中 + 计时器在下方 */
+        .center-stack {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        /* 跳动的爱心保持原来的左上角位置（.hrt/.lef/.rig/.cen 已定义） */
+
+        .love-img {
+            max-width: 60vmin;
+            max-height: 50vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 35px rgba(0, 0, 0, 0.18));
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .center-stack .content {
+            position: static;
+            width: auto;
+            transform: none;
+            margin-top: 28px;
+        }
+
+        body.theme-starry .content {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .timer {
+            font-size: clamp(14px, 4vw, 18px);
+            line-height: 1.8;
+            margin: 1.2em 0;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .timer b {
+            color: #ff3366;
+            font-weight: 600;
+        }
+
+        body.theme-starry .timer b {
+            color: #ffd93d;
+        }
+
         .heart {
             position: absolute;
             font-size: 30px;
-            color: red;
             animation: float 3s ease-out forwards;
+            pointer-events: none;
+            z-index: 99;
         }
 
-        /* 红心的漂浮动画 */
         @keyframes float {
             0% {
-                transform: scale(0) translate(0, 0);
+                transform: scale(0) translate(0, 0) rotate(0deg);
                 opacity: 1;
             }
             100% {
-                transform: scale(1) translate(var(--x), var(--y));
+                transform: scale(1) translate(var(--x), var(--y)) rotate(var(--rotate, 0deg));
                 opacity: 0;
+            }
+        }
+
+        .falling-item {
+            position: absolute;
+            top: -50px;
+            pointer-events: none;
+            opacity: 0.6;
+            animation: fall linear forwards;
+            z-index: 1;
+        }
+
+        @keyframes fall {
+            to {
+                top: 110%;
+                transform: translateX(var(--drift)) rotate(var(--rotation));
+                opacity: 0;
+            }
+        }
+
+        /* 液态玻璃风格功能栏 - 固定图标+可拖动高亮 */
+        .glass-dock {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            padding: 10px 14px;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body.theme-starry .glass-dock {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* 分隔线 */
+        .glass-dock-divider {
+            width: 1px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .glass-dock-container {
+            display: flex;
+            gap: 8px;
+            position: relative;
+        }
+
+        .glass-dock-item {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.2s ease;
+        }
+
+        .glass-dock-item:active {
+            transform: scale(0.9);
+        }
+
+        .glass-dock-item-label {
+            font-size: 9px;
+            margin-top: 1px;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            font-weight: 500;
+        }
+
+        body.theme-starry .glass-dock-item-label {
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        /* 可拖动的液态玻璃高亮层 */
+        .glass-dock-highlight {
+            position: absolute;
+            width: 40px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 2px;
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4),
+                        0 0 20px rgba(255, 255, 255, 0.3);
+            z-index: 1;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: auto;
+            cursor: grab;
+            bottom: 2px;
+            left: 18px;
+        }
+
+        body.theme-starry .glass-dock-highlight {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .glass-dock-highlight.dragging {
+            transition: none;
+            transform: scaleY(1.5);
+            cursor: grabbing;
+        }
+
+        /* 音乐控制按钮 - 内嵌在功能栏 */
+        .music-control {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+
+        .music-control:hover {
+            background: rgba(255, 255, 255, 0.28);
+        }
+
+        .music-control:active {
+            transform: scale(0.92);
+        }
+
+        body.theme-starry .music-control {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .music-icon {
+            position: relative;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 喇叭主体 */
+        .speaker {
+            position: absolute;
+            left: 2px;
+            width: 8px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 2px 0 0 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 喇叭口 */
+        .speaker::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 6px 0 6px 7px;
+            border-color: transparent transparent transparent rgba(255, 255, 255, 0.95);
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+        }
+
+        /* 音量波纹容器 */
+        .sound-waves {
+            position: absolute;
+            right: 0;
+            width: 12px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 2px;
+        }
+
+        /* 波纹线条 */
+        .wave {
+            width: 2px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+        }
+
+        .wave:nth-child(1) {
+            height: 6px;
+            animation: wave1 1.2s ease-in-out infinite;
+        }
+
+        .wave:nth-child(2) {
+            height: 10px;
+            animation: wave2 1.2s ease-in-out infinite 0.2s;
+        }
+
+        .wave:nth-child(3) {
+            height: 14px;
+            animation: wave3 1.2s ease-in-out infinite 0.4s;
+        }
+
+        @keyframes wave1 {
+            0%, 100% { height: 6px; opacity: 0.6; }
+            50% { height: 8px; opacity: 1; }
+        }
+
+        @keyframes wave2 {
+            0%, 100% { height: 10px; opacity: 0.7; }
+            50% { height: 14px; opacity: 1; }
+        }
+
+        @keyframes wave3 {
+            0%, 100% { height: 14px; opacity: 0.8; }
+            50% { height: 18px; opacity: 1; }
+        }
+
+        /* 静音状态 */
+        .music-icon.muted .wave {
+            height: 2px !important;
+            opacity: 0.3 !important;
+            animation: none !important;
+        }
+
+        .music-icon.muted .speaker,
+        .music-icon.muted .speaker::before {
+            opacity: 0.5;
+        }
+
+        /* 静音叉号 */
+        .mute-x {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .mute-x::before,
+        .mute-x::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 2px;
+            background: rgba(255, 80, 80, 0.9);
+            border-radius: 1px;
+            box-shadow: 0 0 6px rgba(255, 80, 80, 0.6);
+        }
+
+        .mute-x::before {
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .mute-x::after {
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+
+        .music-icon.muted .mute-x {
+            opacity: 1;
+        }
+
+        /* 全屏页面容器 - 整页切换 */
+        .page-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .page-view.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .page-view-content {
+            width: 100%;
+            height: 100%;
+            padding: 80px 30px 120px 30px;
+            overflow-y: auto;
+            transform: translateY(30px);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .page-view.active .page-view-content {
+            transform: translateY(0);
+        }
+
+        .page-view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        body.theme-starry .page-view-header {
+            border-bottom-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .page-view-header h3 {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 28px;
+            font-weight: 600;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .page-close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .page-close-btn:active {
+            transform: scale(0.95);
+        }
+
+        .page-body {
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        /* 主页内容 */
+        .main-content {
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .main-content.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+
+        /* 旧的模态框样式（保留，但不显示） */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #666;
+        }
+
+        .countdown-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            color: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 16px;
+            margin: 15px 0;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .countdown-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        body.theme-starry .countdown-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        body.theme-pink .countdown-card {
+            background: rgba(255, 182, 193, 0.3);
+        }
+
+        body.theme-sakura .countdown-card {
+            background: rgba(255, 192, 203, 0.3);
+        }
+
+        body.theme-beach .countdown-card {
+            background: rgba(137, 207, 240, 0.3);
+        }
+
+        body.theme-sunset .countdown-card {
+            background: rgba(250, 112, 154, 0.3);
+        }
+
+        .countdown-card h4 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            font-weight: 500;
+            opacity: 0.95;
+        }
+
+        .countdown-value {
+            font-size: 32px;
+            font-weight: 600;
+            margin: 15px 0;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .countdown-card p {
+            margin: 8px 0 0;
+            opacity: 0.85;
+            font-size: 15px;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        /* 时间轴中线 */
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom,
+                rgba(255, 255, 255, 0.2),
+                rgba(255, 255, 255, 0.6),
+                rgba(255, 255, 255, 0.2));
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin: 30px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-item:nth-child(odd) {
+            flex-direction: row;
+        }
+
+        .timeline-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        /* 时间轴节点 */
+        .timeline-node {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            z-index: 2;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2),
+                        0 0 20px rgba(255, 255, 255, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        body.theme-pink .timeline-node {
+            border-color: rgba(255, 182, 193, 0.8);
+            box-shadow: 0 0 0 4px rgba(255, 182, 193, 0.3),
+                        0 0 20px rgba(255, 182, 193, 0.5);
+        }
+
+        body.theme-sakura .timeline-node {
+            border-color: rgba(255, 192, 203, 0.8);
+            box-shadow: 0 0 0 4px rgba(255, 192, 203, 0.3),
+                        0 0 20px rgba(255, 192, 203, 0.5);
+        }
+
+        body.theme-beach .timeline-node {
+            border-color: rgba(137, 207, 240, 0.8);
+            box-shadow: 0 0 0 4px rgba(137, 207, 240, 0.3),
+                        0 0 20px rgba(137, 207, 240, 0.5);
+        }
+
+        body.theme-sunset .timeline-node {
+            border-color: rgba(250, 112, 154, 0.8);
+            box-shadow: 0 0 0 4px rgba(250, 112, 154, 0.3),
+                        0 0 20px rgba(250, 112, 154, 0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.2);
+            }
+        }
+
+        /* 时间轴内容 */
+        .timeline-content {
+            width: 45%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        body.theme-starry .timeline-content {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        body.theme-pink .timeline-content {
+            background: rgba(255, 182, 193, 0.25);
+        }
+
+        body.theme-sakura .timeline-content {
+            background: rgba(255, 192, 203, 0.25);
+        }
+
+        body.theme-beach .timeline-content {
+            background: rgba(137, 207, 240, 0.25);
+        }
+
+        body.theme-sunset .timeline-content {
+            background: rgba(250, 112, 154, 0.25);
+        }
+
+        .timeline-item:nth-child(odd) .timeline-content {
+            margin-right: auto;
+            margin-left: 0;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content {
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        .timeline-date {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .timeline-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .timeline-description {
+            font-size: 14px;
+            opacity: 0.85;
+            line-height: 1.5;
+        }
+
+        /* 重要日期列表 */
+        .date-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .date-item {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .date-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        body.theme-starry .date-item {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        body.theme-pink .date-item {
+            background: rgba(255, 182, 193, 0.25);
+        }
+
+        body.theme-sakura .date-item {
+            background: rgba(255, 192, 203, 0.25);
+        }
+
+        body.theme-beach .date-item {
+            background: rgba(137, 207, 240, 0.25);
+        }
+
+        body.theme-sunset .date-item {
+            background: rgba(250, 112, 154, 0.25);
+        }
+
+        .date-item h4 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .date-item p {
+            margin: 5px 0;
+            font-size: 14px;
+            opacity: 0.85;
+        }
+
+        .checkin-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .checkin-day {
+            aspect-ratio: 1;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #666;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .checkin-day.checked {
+            background: linear-gradient(135deg, #ff6b9d, #d5093c);
+            color: white;
+            font-weight: 600;
+        }
+
+        .checkin-day.today {
+            border: 2px solid #667eea;
+            font-weight: 600;
+        }
+
+        .checkin-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .checkin-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .checkin-btn:disabled {
+            background: #ddd;
+            cursor: not-allowed;
+        }
+
+        #checkin-stats {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #ffeef8, #ffe4f1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #checkin-stats p {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        #checkin-stats strong {
+            color: #d5093c;
+            font-size: 24px;
+        }
+
+        .date-list {
+            margin: 20px 0;
+        }
+
+        .date-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 12px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .date-item h4 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .date-item p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        #fireworks-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            display: none;
+        }
+
+        #fireworks-canvas.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .glass-dock {
+                bottom: 20px;
+                padding: 8px 12px;
+            }
+
+            .glass-dock-container {
+                gap: 6px;
+            }
+
+            .glass-dock-item {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
+            }
+
+            .glass-dock-item-label {
+                font-size: 8px;
+            }
+
+            .glass-dock-highlight {
+                width: 36px;
+                height: 3px;
+                bottom: 2px;
+                left: 16px;
+            }
+
+            .modal-content {
+                padding: 20px;
+                max-width: 95%;
+            }
+
+            .modal-header h3 {
+                font-size: 18px;
+            }
+
+            .timeline-date {
+                min-width: 80px;
+                font-size: 13px;
+            }
+
+            .timeline-content {
+                padding: 12px;
+            }
+
+            .countdown-value {
+                font-size: 24px;
             }
         }
     </style>
 </head>
-<body>
-    <div>
+<body class="theme-pink">
+    <!-- 主页内容 -->
+    <div class="main-content" id="mainContent">
         <div class="hrt lef"></div>
         <div class="hrt cen"></div>
         <div class="hrt rig"></div>
-        <div class="content">
-<!--         <h2>宝贝，我们已经在一起</h2> -->
-        <div class="timer">
-            <b id="d"></b> 天 <b id="h"></b> 小时 <b id="m"></b> 分 <b id="s"></b> 秒
+        <div class="center-stack">
+            <img src="love.png" class="love-img" alt="love" />
+            <div class="content">
+                <div class="timer">
+                    <b id="d"></b> 天 <b id="h"></b> 小时 <b id="m"></b> 分 <b id="s"></b> 秒
+                </div>
+            </div>
         </div>
     </div>
-</div>
-<!--心脏跳动声-->
-<audio src="mp3/heartbeat.mp3" autoplay="autoplay" loop="loop"></audio>
-<script>
-    // 每次点击生成的红心数量
-    const numHearts = 5;
 
-    // 创建红心的函数
-    function createHearts(x, y) {
-        for (let i = 0; i < numHearts; i++) {
-            // 创建一个新的红心元素
-            const heart = document.createElement("div");
-            heart.classList.add("heart");
-            heart.innerHTML = "❤️😘❤️";
+    <!-- 主题指示器 -->
+    <div class="theme-indicator" id="themeIndicator"></div>
 
-            // 随机化红心的大小
-            const size = Math.random() * 20 + 20;  // 红心大小在 20px 到 40px 之间
-            heart.style.fontSize = `${size}px`;
+    <!-- 液态玻璃功能栏 -->
+    <div class="glass-dock" id="glassDock">
+        <!-- 可拖动的高亮层 -->
+        <div class="glass-dock-highlight" id="glassHighlight"></div>
 
-            // 随机化红心漂浮的方向和距离
-            const randomX = (Math.random() - 0.5) * 200;  // 随机的水平距离（-100px 到 100px）
-            const randomY = - (Math.random() * 200 + 100);  // 随机的垂直距离（-100px 到 -300px）
+        <div class="glass-dock-container" id="glassContainer">
+            <div class="glass-dock-item" data-action="countdown" data-index="0">
+                <span>📅</span>
+                <div class="glass-dock-item-label">倒计时</div>
+            </div>
+            <div class="glass-dock-item" data-action="timeline" data-index="1">
+                <span>⏰</span>
+                <div class="glass-dock-item-label">时光轴</div>
+            </div>
+            <div class="glass-dock-item" data-action="checkin" data-index="2">
+                <span>💝</span>
+                <div class="glass-dock-item-label">打卡</div>
+            </div>
+            <div class="glass-dock-item" data-action="dates" data-index="3">
+                <span>🎂</span>
+                <div class="glass-dock-item-label">日期</div>
+            </div>
+        </div>
 
-            // 将红心的初始位置设置为触摸或点击的位置
-            heart.style.left = `${x - size / 2}px`;  // 使红心居中在点击或触摸位置
-            heart.style.top = `${y - size / 2}px`;  // 使红心居中在点击或触摸位置
+        <!-- 分隔线 -->
+        <div class="glass-dock-divider"></div>
 
-            // 使用 CSS 变量来应用随机的移动方向
-            heart.style.setProperty('--x', `${randomX}px`);
-            heart.style.setProperty('--y', `${randomY}px`);
+        <!-- 音乐控制按钮 -->
+        <div class="music-control" id="musicControl">
+            <div class="music-icon" id="musicIcon">
+                <div class="speaker"></div>
+                <div class="sound-waves">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                </div>
+                <div class="mute-x"></div>
+            </div>
+        </div>
+    </div>
 
-            // 将红心添加到页面中
-            document.body.appendChild(heart);
+    <!-- 倒计时页面 -->
+    <div id="countdown-page" class="page-view">
+        <div class="page-view-content">
+            <div class="page-view-header">
+                <h3>📅 纪念日倒计时</h3>
+                <button class="page-close-btn" onclick="closePage('countdown')">×</button>
+            </div>
+            <div class="page-body" id="countdown-list"></div>
+        </div>
+    </div>
 
-            // 动画结束后移除红心（3秒后）
-            setTimeout(() => {
-                heart.remove();
+    <!-- 时光轴页面 -->
+    <div id="timeline-page" class="page-view">
+        <div class="page-view-content">
+            <div class="page-view-header">
+                <h3>⏰ 我们的时光轴</h3>
+                <button class="page-close-btn" onclick="closePage('timeline')">×</button>
+            </div>
+            <div class="page-body">
+                <div class="timeline" id="timeline-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 打卡页面 -->
+    <div id="checkin-page" class="page-view">
+        <div class="page-view-content">
+            <div class="page-view-header">
+                <h3>💝 爱的打卡</h3>
+                <button class="page-close-btn" onclick="closePage('checkin')">×</button>
+            </div>
+            <div class="page-body">
+                <div id="checkin-stats"></div>
+                <div class="checkin-calendar" id="checkin-calendar"></div>
+                <button class="checkin-btn" id="checkin-btn" onclick="doCheckin()">今日打卡</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重要日期页面 -->
+    <div id="dates-page" class="page-view">
+        <div class="page-view-content">
+            <div class="page-view-header">
+                <h3>🎂 重要日期提醒</h3>
+                <button class="page-close-btn" onclick="closePage('dates')">×</button>
+            </div>
+            <div class="page-body">
+                <div class="date-list" id="date-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="fireworks-canvas"></canvas>
+
+    <audio id="bgMusic" src="love.mp3" loop="loop"></audio>
+
+    <script>
+        const importantDates = [
+            { name: "相识纪念日", date: "2023-02-14", description: "我们相遇的美好时刻" },
+            { name: "碎冰冰的生日", date: "2024-10-14", description: "生日快乐！" },
+            { name: "薯条的生日", date: "2024-06-01", description: "薯条的生日" },
+            { name: "第一次约会", date: "2023-03-01", description: "难忘的第一次约会" }
+        ];
+
+        const timelineEvents = [
+            { date: "2023-02-14", title: "相遇", description: "在最美的时刻遇见了你" },
+            { date: "2023-03-01", title: "第一次约会", description: "一起看了一场浪漫的电影" },
+            { date: "2023-05-20", title: "在一起", description: "正式确定关系的日子" },
+            { date: "2023-08-15", title: "第一次旅行", description: "我们的第一次旅行" },
+            { date: "2024-02-14", title: "一周年", description: "在一起一周年纪念日" }
+        ];
+
+        // ============ 液态玻璃功能栏 - 可拖动高亮 ============
+        let currentDockIndex = 0;
+        const dockItems = document.querySelectorAll('.glass-dock-item');
+        const glassHighlight = document.getElementById('glassHighlight');
+        const glassDock = document.getElementById('glassDock');
+        let isDockDragging = false;
+        let dockStartX = 0;
+        let highlightStartLeft = 0;
+
+        // 初始化高亮位置
+        function updateHighlightPosition(index, animated = true) {
+            const item = dockItems[index];
+            const itemRect = item.getBoundingClientRect();
+            const dockRect = glassDock.getBoundingClientRect();
+            // 让指示线在图标下方居中
+            const offset = (itemRect.width - glassHighlight.offsetWidth) / 2;
+            const relativeLeft = itemRect.left - dockRect.left + offset;
+
+            if (!animated) {
+                glassHighlight.style.transition = 'none';
+            }
+            glassHighlight.style.left = relativeLeft + 'px';
+            if (!animated) {
+                setTimeout(() => {
+                    glassHighlight.style.transition = '';
+                }, 10);
+            }
+
+            currentDockIndex = index;
+        }
+
+        // 初始化
+        updateHighlightPosition(0, false);
+
+        // 点击切换
+        dockItems.forEach((item, index) => {
+            item.addEventListener('click', (e) => {
+                if (!isDockDragging) {
+                    updateHighlightPosition(index);
+                    const action = item.dataset.action;
+                    setTimeout(() => openPage(action), 200);
+                }
+            });
+        });
+
+        // 触摸拖动
+        glassHighlight.style.pointerEvents = 'auto';
+        glassHighlight.style.cursor = 'grab';
+
+        glassHighlight.addEventListener('touchstart', (e) => {
+            isDockDragging = true;
+            dockStartX = e.touches[0].clientX;
+            highlightStartLeft = parseFloat(glassHighlight.style.left) || 0;
+            glassHighlight.classList.add('dragging');
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDockDragging) return;
+
+            const touchX = e.touches[0].clientX;
+            const deltaX = touchX - dockStartX;
+            let newLeft = highlightStartLeft + deltaX;
+
+            // 限制范围
+            const dockRect = glassDock.getBoundingClientRect();
+            const containerRect = document.getElementById('glassContainer').getBoundingClientRect();
+            const minLeft = 0;
+            const maxLeft = containerRect.width - glassHighlight.offsetWidth;
+            newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+
+            glassHighlight.style.left = newLeft + 'px';
+
+            // 检测当前悬停在哪个图标上
+            const highlightCenter = newLeft + glassHighlight.offsetWidth / 2;
+            dockItems.forEach((item, index) => {
+                const itemRect = item.getBoundingClientRect();
+                const dockRect = glassDock.getBoundingClientRect();
+                const itemCenter = itemRect.left - dockRect.left + itemRect.width / 2;
+
+                if (Math.abs(highlightCenter - itemCenter) < itemRect.width / 2) {
+                    currentDockIndex = index;
+                }
+            });
+        });
+
+        document.addEventListener('touchend', () => {
+            if (!isDockDragging) return;
+            isDockDragging = false;
+            glassHighlight.classList.remove('dragging');
+
+            // 吸附到最近的图标
+            updateHighlightPosition(currentDockIndex);
+            const action = dockItems[currentDockIndex].dataset.action;
+            setTimeout(() => openPage(action), 200);
+        });
+
+        // 鼠标拖动
+        glassHighlight.addEventListener('mousedown', (e) => {
+            isDockDragging = true;
+            dockStartX = e.clientX;
+            highlightStartLeft = parseFloat(glassHighlight.style.left) || 0;
+            glassHighlight.classList.add('dragging');
+            glassHighlight.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDockDragging) return;
+
+            const mouseX = e.clientX;
+            const deltaX = mouseX - dockStartX;
+            let newLeft = highlightStartLeft + deltaX;
+
+            // 限制范围
+            const dockRect = glassDock.getBoundingClientRect();
+            const containerRect = document.getElementById('glassContainer').getBoundingClientRect();
+            const minLeft = 0;
+            const maxLeft = containerRect.width - glassHighlight.offsetWidth;
+            newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+
+            glassHighlight.style.left = newLeft + 'px';
+
+            // 检测当前悬停在哪个图标上
+            const highlightCenter = newLeft + glassHighlight.offsetWidth / 2;
+            dockItems.forEach((item, index) => {
+                const itemRect = item.getBoundingClientRect();
+                const dockRect = glassDock.getBoundingClientRect();
+                const itemCenter = itemRect.left - dockRect.left + itemRect.width / 2;
+
+                if (Math.abs(highlightCenter - itemCenter) < itemRect.width / 2) {
+                    currentDockIndex = index;
+                }
+            });
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDockDragging) return;
+            isDockDragging = false;
+            glassHighlight.classList.remove('dragging');
+            glassHighlight.style.cursor = 'grab';
+
+            // 吸附到最近的图标
+            updateHighlightPosition(currentDockIndex);
+            const action = dockItems[currentDockIndex].dataset.action;
+            setTimeout(() => openPage(action), 200);
+        });
+
+        // 窗口大小变化时重新计算位置
+        window.addEventListener('resize', () => {
+            updateHighlightPosition(currentDockIndex, false);
+        });
+
+        // ============ 主题切换 ============
+        let currentTheme = localStorage.getItem('theme') || 'pink';
+        let fallingInterval = null;
+
+        const themes = {
+            pink: { emoji: '💗', count: 3, name: '粉色浪漫' },
+            starry: { emoji: '⭐', count: 5, name: '星空夜语' },
+            sakura: { emoji: '🌸', count: 6, name: '樱花飘落' },
+            beach: { emoji: '🐚', count: 4, name: '海滩时光' },
+            sunset: { emoji: '✨', count: 5, name: '日落余晖' }
+        };
+
+        const themeOrder = ['pink', 'starry', 'sakura', 'beach', 'sunset'];
+        let indicatorTimeout;
+
+        function setTheme(theme, showIndicator = false) {
+            currentTheme = theme;
+            document.body.className = 'theme-' + theme;
+            localStorage.setItem('theme', theme);
+            if (fallingInterval) clearInterval(fallingInterval);
+            startFalling();
+
+            // 显示主题指示器
+            if (showIndicator) {
+                const indicator = document.getElementById('themeIndicator');
+                indicator.textContent = themes[theme].name;
+                indicator.classList.add('show');
+
+                clearTimeout(indicatorTimeout);
+                indicatorTimeout = setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 1500);
+            }
+        }
+
+        setTheme(currentTheme);
+
+        // 滑动切换主题 - 只在左右边缘生效
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isSwiping = false;
+        let isEdgeSwipe = false;
+        const edgeWidth = 80; // 边缘触发区域宽度（像素）
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isSwiping = false;
+
+            // 判断是否在屏幕左右边缘
+            const screenWidth = window.innerWidth;
+            isEdgeSwipe = touchStartX < edgeWidth || touchStartX > screenWidth - edgeWidth;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isEdgeSwipe) return; // 不在边缘则不处理
+
+            if (!isSwiping) {
+                const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+                const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+                // 判断是横向滑动
+                if (deltaX > deltaY && deltaX > 10) {
+                    isSwiping = true;
+                }
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            if (!isSwiping || !isEdgeSwipe) return;
+
+            const touchEndX = e.changedTouches[0].clientX;
+            const deltaX = touchEndX - touchStartX;
+
+            // 滑动距离超过50px才触发
+            if (Math.abs(deltaX) > 50) {
+                const currentIndex = themeOrder.indexOf(currentTheme);
+                let newIndex;
+
+                if (deltaX > 0) {
+                    // 右滑 - 上一个主题
+                    newIndex = currentIndex - 1;
+                    if (newIndex < 0) newIndex = themeOrder.length - 1;
+                } else {
+                    // 左滑 - 下一个主题
+                    newIndex = currentIndex + 1;
+                    if (newIndex >= themeOrder.length) newIndex = 0;
+                }
+
+                setTheme(themeOrder[newIndex], true);
+            }
+
+            isSwiping = false;
+            isEdgeSwipe = false;
+        });
+
+        // 桌面端：鼠标滑动切换 - 只在左右边缘生效
+        let mouseStartX = 0;
+        let isDragging = false;
+        let isEdgeDrag = false;
+
+        document.addEventListener('mousedown', (e) => {
+            mouseStartX = e.clientX;
+            isDragging = false;
+
+            // 判断是否在屏幕左右边缘
+            const screenWidth = window.innerWidth;
+            isEdgeDrag = mouseStartX < edgeWidth || mouseStartX > screenWidth - edgeWidth;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isEdgeDrag) return; // 不在边缘则不处理
+
+            if (e.buttons === 1) { // 鼠标按下
+                const deltaX = Math.abs(e.clientX - mouseStartX);
+                if (deltaX > 10) {
+                    isDragging = true;
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (!isDragging || !isEdgeDrag) return;
+
+            const mouseEndX = e.clientX;
+            const deltaX = mouseEndX - mouseStartX;
+
+            if (Math.abs(deltaX) > 80) {
+                const currentIndex = themeOrder.indexOf(currentTheme);
+                let newIndex;
+
+                if (deltaX > 0) {
+                    newIndex = currentIndex - 1;
+                    if (newIndex < 0) newIndex = themeOrder.length - 1;
+                } else {
+                    newIndex = currentIndex + 1;
+                    if (newIndex >= themeOrder.length) newIndex = 0;
+                }
+
+                setTheme(themeOrder[newIndex], true);
+            }
+
+            isDragging = false;
+            isEdgeDrag = false;
+        });
+
+        function createFallingItem() {
+            const item = document.createElement('div');
+            item.className = 'falling-item';
+            item.textContent = themes[currentTheme].emoji;
+            item.style.left = Math.random() * 100 + '%';
+            item.style.fontSize = (Math.random() * 15 + 15) + 'px';
+
+            const drift = (Math.random() - 0.5) * 100;
+            const rotation = Math.random() * 360;
+            const duration = Math.random() * 5 + 5;
+
+            item.style.setProperty('--drift', drift + 'px');
+            item.style.setProperty('--rotation', rotation + 'deg');
+            item.style.animationDuration = duration + 's';
+
+            document.body.appendChild(item);
+            setTimeout(() => item.remove(), duration * 1000);
+        }
+
+        function startFalling() {
+            const config = themes[currentTheme];
+            fallingInterval = setInterval(() => {
+                for (let i = 0; i < config.count; i++) {
+                    setTimeout(createFallingItem, Math.random() * 1000);
+                }
             }, 3000);
         }
-    }
 
-    // 在页面上监听点击事件
-    document.body.addEventListener("click", (event) => {
-        createHearts(event.pageX, event.pageY);
-    });
+        startFalling();
 
-    // 监听触摸事件（开始和移动）
-    document.body.addEventListener("touchstart", (event) => {
-        const touch = event.touches[0];  // 获取第一个触摸点
-        createHearts(touch.pageX, touch.pageY);
-        event.preventDefault();  // 防止页面滚动
-    });
+        // ============ 音乐控制 ============
+        const bgMusic = document.getElementById('bgMusic');
+        const musicControl = document.getElementById('musicControl');
+        const musicIcon = document.getElementById('musicIcon');
+        let isMusicPlaying = false;
 
-    document.body.addEventListener("touchmove", (event) => {
-        const touch = event.touches[0];  // 获取第一个触摸点
-        createHearts(touch.pageX, touch.pageY);
-        event.preventDefault();  // 防止页面滚动
-    });
+        // 尝试自动播放
+        bgMusic.play().catch(() => {
+            // 浏览器阻止了自动播放，等待用户交互
+            isMusicPlaying = false;
+            musicIcon.classList.add('muted');
+        });
 
-    function timer() {
-        var start = new Date("2023/2/14 00:00:00"); // 2015.7.2
-        var t = new Date() - start;
-        var d = parseInt((new Date().getTime()-start.getTime())/(1000*3600*24));
-        var h = ~~(t / 1000 / 60 / 60 % 24);
-        if (h < 10) {
-            h = "0" + h;
+        // 如果成功播放
+        bgMusic.addEventListener('play', () => {
+            isMusicPlaying = true;
+            musicIcon.classList.remove('muted');
+        });
+
+        // 点击切换播放/暂停
+        musicControl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicIcon.classList.add('muted');
+            } else {
+                bgMusic.play();
+                isMusicPlaying = true;
+                musicIcon.classList.remove('muted');
+            }
+        });
+
+        // 页面首次点击时尝试播放（应对浏览器自动播放限制）
+        let hasTriedAutoPlay = false;
+        document.addEventListener('click', () => {
+            if (!hasTriedAutoPlay && !isMusicPlaying) {
+                bgMusic.play().catch(() => {});
+                hasTriedAutoPlay = true;
+            }
+        }, { once: true });
+
+        // ============ 红心点击特效 ============
+        const numHearts = 5;
+        function createHearts(x, y) {
+            for (let i = 0; i < numHearts; i++) {
+                const heart = document.createElement("div");
+                heart.classList.add("heart");
+                heart.innerHTML = "❤️";
+                const size = Math.random() * 20 + 20;
+                heart.style.fontSize = size + 'px';
+                const randomX = (Math.random() - 0.5) * 200;
+                const randomY = -(Math.random() * 200 + 100);
+                heart.style.left = (x - size / 2) + 'px';
+                heart.style.top = (y - size / 2) + 'px';
+                heart.style.setProperty('--x', randomX + 'px');
+                heart.style.setProperty('--y', randomY + 'px');
+                heart.style.setProperty('--rotate', (Math.random() * 180 - 90) + 'deg');
+                document.body.appendChild(heart);
+                setTimeout(() => heart.remove(), 3000);
+            }
         }
-        var m = ~~(t / 1000 / 60 % 60);
-        if (m < 10) {
-            m = "0" + m;
+
+        document.body.addEventListener("click", (e) => createHearts(e.pageX, e.pageY));
+        document.body.addEventListener("touchstart", (e) => {
+            createHearts(e.touches[0].pageX, e.touches[0].pageY);
+            e.preventDefault();
+        });
+
+        function timer() {
+            var start = new Date("2023/2/14 00:00:00");
+            var t = new Date() - start;
+            var d = parseInt((new Date().getTime()-start.getTime())/(1000*3600*24));
+            var h = ~~(t / 1000 / 60 / 60 % 24);
+            if (h < 10) h = "0" + h;
+            var m = ~~(t / 1000 / 60 % 60);
+            if (m < 10) m = "0" + m;
+            var s = ~~(t / 1000 % 60);
+            if (s < 10) s = "0" + s;
+            document.getElementById('d').innerHTML = d;
+            document.getElementById('h').innerHTML = h;
+            document.getElementById('m').innerHTML = m;
+            document.getElementById('s').innerHTML = s;
+        }
+        timer();
+        setInterval(timer, 1000);
+
+        // ============ 页面打开/关闭 ============
+        const mainContent = document.getElementById('mainContent');
+        let currentOpenPage = null;
+
+        function openPage(type) {
+            // 如果有已打开的页面，先关闭它
+            if (currentOpenPage && currentOpenPage !== type) {
+                const oldPage = document.getElementById(currentOpenPage + '-page');
+                oldPage.classList.remove('active');
+            }
+
+            // 隐藏主页内容
+            mainContent.classList.add('hidden');
+
+            // 显示功能页面
+            const page = document.getElementById(type + '-page');
+            setTimeout(() => {
+                page.classList.add('active');
+            }, 100);
+
+            currentOpenPage = type;
+
+            // 加载对应内容
+            if (type === 'countdown') loadCountdown();
+            if (type === 'timeline') loadTimeline();
+            if (type === 'checkin') loadCheckin();
+            if (type === 'dates') loadDates();
         }
 
-        var s = ~~(t / 1000 % 60);
-        if (s < 10) {
-            s = "0" + s;
+        function closePage(type) {
+            const page = document.getElementById(type + '-page');
+            page.classList.remove('active');
+
+            currentOpenPage = null;
+
+            // 显示主页内容
+            setTimeout(() => {
+                mainContent.classList.remove('hidden');
+            }, 300);
         }
-        document.getElementById('d').innerHTML = d;
-        document.getElementById('h').innerHTML = h;
-        document.getElementById('m').innerHTML = m;
-        document.getElementById('s').innerHTML = s;
-    }
-    timer();
-    setInterval(timer, 1000);
-</script>
+
+        // 点击背景不关闭页面（整页模式）
+
+        function loadCountdown() {
+            const container = document.getElementById('countdown-list');
+            container.innerHTML = '';
+            const now = new Date();
+            const upcoming = importantDates.map(item => {
+                const parts = item.date.split('-');
+                let nextDate = new Date(now.getFullYear(), parts[1] - 1, parts[2]);
+                if (nextDate < now) {
+                    nextDate = new Date(now.getFullYear() + 1, parts[1] - 1, parts[2]);
+                }
+                const diff = nextDate - now;
+                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                return { ...item, nextDate, days };
+            }).sort((a, b) => a.days - b.days);
+
+            upcoming.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'countdown-card';
+                card.innerHTML = '<h4>' + item.name + '</h4><div class="countdown-value">还有 ' + item.days + ' 天</div><p>' + item.nextDate.getFullYear() + '年' + (item.nextDate.getMonth() + 1) + '月' + item.nextDate.getDate() + '日</p>';
+                container.appendChild(card);
+            });
+        }
+
+        function loadTimeline() {
+            const container = document.getElementById('timeline-list');
+            container.innerHTML = '';
+            const sorted = [...timelineEvents].sort((a, b) => new Date(a.date) - new Date(b.date));
+            sorted.forEach(event => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                const date = new Date(event.date);
+                const dateStr = date.getFullYear() + '.' + (date.getMonth() + 1) + '.' + date.getDate();
+
+                item.innerHTML = `
+                    <div class="timeline-node"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-date">${dateStr}</div>
+                        <div class="timeline-title">${event.title}</div>
+                        <div class="timeline-description">${event.description}</div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function loadCheckin() {
+            const checkins = JSON.parse(localStorage.getItem('checkins') || '[]');
+            const today = new Date().toISOString().split('T')[0];
+            const hasCheckedToday = checkins.includes(today);
+            const stats = document.getElementById('checkin-stats');
+            stats.innerHTML = '<p>总打卡天数: <strong>' + checkins.length + '</strong> 天 💝</p>';
+
+            const calendar = document.getElementById('checkin-calendar');
+            calendar.innerHTML = '';
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+
+            ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
+                const header = document.createElement('div');
+                header.style.fontWeight = 'bold';
+                header.style.textAlign = 'center';
+                header.textContent = day;
+                calendar.appendChild(header);
+            });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                calendar.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'checkin-day';
+                dayDiv.textContent = day;
+
+                if (checkins.includes(dateStr)) {
+                    dayDiv.classList.add('checked');
+                    dayDiv.innerHTML = '❤️';
+                }
+
+                if (dateStr === today) {
+                    dayDiv.classList.add('today');
+                }
+
+                calendar.appendChild(dayDiv);
+            }
+
+            const btn = document.getElementById('checkin-btn');
+            if (hasCheckedToday) {
+                btn.disabled = true;
+                btn.textContent = '今日已打卡 ✓';
+            } else {
+                btn.disabled = false;
+                btn.textContent = '今日打卡';
+            }
+        }
+
+        function doCheckin() {
+            const checkins = JSON.parse(localStorage.getItem('checkins') || '[]');
+            const today = new Date().toISOString().split('T')[0];
+            if (!checkins.includes(today)) {
+                checkins.push(today);
+                localStorage.setItem('checkins', JSON.stringify(checkins));
+                loadCheckin();
+                alert('打卡成功！❤️');
+            }
+        }
+
+        function loadDates() {
+            const container = document.getElementById('date-list');
+            container.innerHTML = '';
+            const now = new Date();
+            importantDates.forEach(item => {
+                const date = new Date(item.date);
+                const daysPassed = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'date-item';
+                let timeText = '';
+                if (daysPassed > 0) {
+                    timeText = '已经过去 ' + daysPassed + ' 天';
+                } else if (daysPassed === 0) {
+                    timeText = '就是今天！🎉';
+                } else {
+                    timeText = '还有 ' + Math.abs(daysPassed) + ' 天';
+                }
+                itemDiv.innerHTML = '<h4>' + item.name + '</h4><p>📅 ' + date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日</p><p>⏰ ' + timeText + '</p><p style="color: #999;">' + item.description + '</p>';
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function checkSpecialDate() {
+            const now = new Date();
+            if (now.getDate() === 14) {
+                setTimeout(triggerFireworks, 2000);
+            }
+        }
+
+        function triggerFireworks() {
+            const canvas = document.getElementById('fireworks-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.classList.add('active');
+
+            const particles = [];
+            function createFirework(x, y) {
+                const colors = ['#ff6b6b', '#ff8e53', '#ffbe0b', '#fb5607', '#f72585'];
+                for (let i = 0; i < 100; i++) {
+                    particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.5) * 10,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        life: 1
+                    });
+                }
+            }
+
+            function animate() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach((p, index) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.2;
+                    p.life -= 0.01;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life;
+                    ctx.fill();
+
+                    if (p.life <= 0) {
+                        particles.splice(index, 1);
+                    }
+                });
+
+                ctx.globalAlpha = 1;
+
+                if (particles.length > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    canvas.classList.remove('active');
+                }
+            }
+
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    createFirework(Math.random() * canvas.width, Math.random() * canvas.height / 2);
+                    animate();
+                }, i * 500);
+            }
+        }
+
+        checkSpecialDate();
+
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('fireworks-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
 </body>
 </html>

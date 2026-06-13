@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>点击或滑动显示红心</title>
+  <style>
+    /* 页面基本样式 */
+    body {
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      position: relative;
+      background-color: #f1f1f1;
+    }
+
+    /* 红心的样式 */
+    .heart {
+      position: absolute;
+      font-size: 30px;
+      color: red;
+      animation: float 3s ease-out forwards;
+    }
+
+    /* 红心的漂浮动画 */
+    @keyframes float {
+      0% {
+        transform: scale(0) translate(0, 0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1) translate(var(--x), var(--y));
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  // 每次点击或滑动生成的红心数量
+  const numHearts = 5;
+
+  // 创建红心的函数
+  function createHearts(x, y) {
+    for (let i = 0; i < numHearts; i++) {
+      // 创建一个新的红心元素
+      const heart = document.createElement("div");
+      heart.classList.add("heart");
+      heart.innerHTML = "❤️";
+
+      // 随机化红心的大小
+      const size = Math.random() * 20 + 20;  // 红心大小在 20px 到 40px 之间
+      heart.style.fontSize = `${size}px`;
+
+      // 随机化红心漂浮的方向和距离
+      const randomX = (Math.random() - 0.5) * 200;  // 随机的水平距离（-100px 到 100px）
+      const randomY = - (Math.random() * 200 + 100);  // 随机的垂直距离（-100px 到 -300px）
+
+      // 将红心的初始位置设置为触摸或点击的位置
+      heart.style.left = `${x - size / 2}px`;  // 使红心居中在点击或触摸位置
+      heart.style.top = `${y - size / 2}px`;  // 使红心居中在点击或触摸位置
+
+      // 使用 CSS 变量来应用随机的移动方向
+      heart.style.setProperty('--x', `${randomX}px`);
+      heart.style.setProperty('--y', `${randomY}px`);
+
+      // 将红心添加到页面中
+      document.body.appendChild(heart);
+
+      // 动画结束后移除红心（3秒后）
+      setTimeout(() => {
+        heart.remove();
+      }, 3000);
+    }
+  }
+
+  // 监听鼠标点击事件
+  document.body.addEventListener("click", (event) => {
+    createHearts(event.pageX, event.pageY);
+  });
+
+  // 监听触摸事件（开始和移动）
+  document.body.addEventListener("touchstart", (event) => {
+    const touch = event.touches[0];  // 获取第一个触摸点
+    createHearts(touch.pageX, touch.pageY);
+    event.preventDefault();  // 防止页面滚动
+  });
+
+  document.body.addEventListener("touchmove", (event) => {
+    const touch = event.touches[0];  // 获取第一个触摸点
+    createHearts(touch.pageX, touch.pageY);
+    event.preventDefault();  // 防止页面滚动
+  });
+</script>
+
+</body>
+</html>
