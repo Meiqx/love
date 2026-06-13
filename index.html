@@ -529,14 +529,18 @@
         }
 
         /* 主页内容 */
-        .main-content {
-            transition: opacity 0.5s ease, transform 0.5s ease;
+        .hrt,
+        .center-stack .content {
+            transition: opacity 0.5s ease;
         }
 
         .main-content.hidden {
-            opacity: 0;
-            transform: scale(0.95);
             pointer-events: none;
+        }
+
+        .main-content.hidden .hrt,
+        .main-content.hidden .center-stack .content {
+            opacity: 0;
         }
 
         /* 旧的模态框样式（保留，但不显示） */
